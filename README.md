@@ -21,3 +21,13 @@
 - The token expiration date can be specified in seconds or as a Unix timestamp (UTC0)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`
+## Installation with ZPM
+```
+zpm "install flexible-rest-client"
+```
+Run the command in the IRIS terminal with IPM installed. Add the `FlexibleREST.Operation.APIClient` to your Production
+## Installation with Git
+```
+git clone https://github.com/ogurecapps/flexible-rest-client.git
+```
+Clone the repo into a local directory and copy the `FlexibleREST` package into your project

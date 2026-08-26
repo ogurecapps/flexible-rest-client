@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+  <Document name="flexible-rest-client.ZPM">
+    <Module>
+      <Name>flexible-rest-client</Name>
+      <Version>1.0.0</Version>
+      <Description>Flexible REST API Client for IRIS Interoperability (Ensemble)</Description>
+      <Keywords>ensemble,interoperability,rest,http,oauth,api,client</Keywords>
+      <Packaging>module</Packaging>
+      <LifecycleClass>%IPM.Lifecycle.Module</LifecycleClass>
+      <SourcesRoot>src</SourcesRoot>
+      <Author>
+        <Name>Andrew Sklyarov</Name>
+        <Copyright>2026</Copyright>
+        <License>Apache-2.0</License>
+      </Author>
+    </Module>
+  </Document>
+</Export>
