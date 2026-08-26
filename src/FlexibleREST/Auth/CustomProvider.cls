@@ -129,7 +129,13 @@ Method Fetch(Output list As %List) As %Status
 	Do httpReq.HttpResponse.Data.Rewind()
 	
 	Set json = $SELECT($iso(httpReq.HttpResponse.Data):{}.%FromJSON(httpReq.HttpResponse.Data),1:{})
+	Set list = ..TokensExtract(json)
 	
+	Return $$$OK
+}
+
+Method TokensExtract(json As %DynamicObject) As %List
+{
 	Set token = ..GetByPath(json, ..TokenField)
 	Return:token="" $$$ERROR($$$GeneralError, $$$FormatText("Field '%1' not found in JSON: %2", ..TokenField, json.%ToJSON()))
 	
@@ -152,9 +158,7 @@ Method Fetch(Output list As %List) As %Status
 		}
 	}
 
-	Set list = $LISTBUILD(token, +tokenExpiresAt, refreshToken, +refreshTokenExpiresAt)
-	
-	Return $$$OK
+	Return $LISTBUILD(token, +tokenExpiresAt, refreshToken, +refreshTokenExpiresAt)
 }
 
 Method FetchByRefreshToken(ByRef httpReq As %Net.HttpRequest) As %Status
