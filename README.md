@@ -18,6 +18,6 @@
 - Customizable auth style on token receiving: `body`, `basic`, `parameters` (see `TokenAuthStyle` setting)
 - Customizable token request body format: `form` (x-www-form-urlencoded) or `json` if you use `TokenAuthStyle = body`
 - Read and write token-related data from any fields. You only need to specify the field names, nesting is allowed! For example: `data.access_token` or `accessToken`
-- The token expiration date can be specified in seconds or as a Unix timestamp
+- The token expiration date can be specified in seconds or as a Unix timestamp (UTC0)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`

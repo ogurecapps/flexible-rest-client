@@ -106,14 +106,20 @@ Method UpdateProcessCache(list As %List)
 
 Method Fetch(Output list As %List) As %Status
 {
-	Set httpReq = ..BuildHttpRequest()
+	Set useRefresh = (..%RefreshToken '= "") && (..%RefreshTokenExpiresAt >= (..NowUnix() + ..Skew))
 
-	If (..%RefreshToken = "") || (..%RefreshTokenExpiresAt < (..NowUnix() + ..Skew)) {
-		Set tSC = ..FetchByToken(.httpReq)
-	} Else {
-		Set tSC = ..FetchByRefreshToken(.httpReq)
-	}
+	Set httpReq = ..BuildHttpRequest()
+	Set tSC = $SELECT(useRefresh: ..FetchByRefreshToken(.httpReq), 1: ..FetchByToken(.httpReq))
 	Return:$$$ISERR(tSC) tSC
+
+	If useRefresh && $iso(httpReq.HttpResponse) && (httpReq.HttpResponse.StatusCode '= 200) {
+		Do ..Warn($$$FormatText("Refresh token rejected (HTTP %1). Falling back to full token fetch", httpReq.HttpResponse.StatusCode), "Fetch")
+		Do ..Invalidate()
+
+		Set httpReq = ..BuildHttpRequest()
+		Set tSC = ..FetchByToken(.httpReq)
+		Return:$$$ISERR(tSC) tSC
+	}
 
 	Return:'$iso(httpReq.HttpResponse) $$$ERROR($$$GeneralError, "Http response is null on token fetching")
 	Return:'$iso(httpReq.HttpResponse.Data) $$$ERROR($$$GeneralError, "Http response data is null on token fetching")

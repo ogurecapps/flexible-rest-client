@@ -31,9 +31,10 @@ Method Invalidate() As %Status
 {
 	Set gref = $NAME(^FlexibleREST.Auth.TokenCache(..TokenKey))
 	Lock +@gref:..LockTimeout
-	Set locked = $TEST
+	Return:'$TEST $$$ERROR($$$GeneralError, $$$FormatText("%1: lock timeout %2", $CLASSNAME(), gref))
+
 	Kill @gref
-	Lock:locked -@gref
+	Lock -@gref
 
 	Return $$$OK
 }

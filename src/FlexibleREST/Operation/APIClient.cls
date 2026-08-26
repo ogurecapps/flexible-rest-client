@@ -148,7 +148,9 @@ Method SendHttp(ByRef pHttpRequest As %Net.HttpRequest, pRequest As FlexibleREST
  	} ElseIf pRequest.Method = "POST" {
 		Set tSC = pHttpRequest.Post(pURL) 	
  	} ElseIf pRequest.Method = "PUT" {
-		Set tSC = pHttpRequest.Put(pURL) 	
+		Set tSC = pHttpRequest.Put(pURL)
+	} ElseIf pRequest.Method = "PATCH" {
+		Set tSC = pHttpRequest.Patch(pURL)
  	} ElseIf pRequest.Method = "DELETE" {
 	 	Set tSC = pHttpRequest.Delete(pURL)	
  	} Else {
@@ -179,7 +181,7 @@ Method BuildResponse(pRequest As FlexibleREST.Message.APIClientReq, pHttpRequest
 	If $iso(resp.Data) {
 		Set pResponse.Stream = $CLASSMETHOD(pRequest.ResponseStreamType, "%New")
 
-		If pRequest.ConvertFrom '= "" {
+		If (pRequest.ConvertFrom '= "") && (pRequest.ResponseStreamType["GlobalCharacter") {
 			While 'resp.Data.AtEnd {
 				Do pResponse.Stream.Write($ZCONVERT(resp.Data.Read(), "I", pRequest.ConvertFrom))
 			}
