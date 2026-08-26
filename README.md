@@ -25,7 +25,7 @@
 ```
 zpm "install flexible-rest-client"
 ```
-Run the command in the IRIS terminal with IPM installed. Add the `FlexibleREST.Operation.APIClient` to your Production
+Run the command in the IRIS terminal with IPM installed. Add the `FlexibleREST.Operation.APIClient` Business Operation to your Production
 ## Installation with Git
 ```
 git clone https://github.com/ogurecapps/flexible-rest-client.git
