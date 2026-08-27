@@ -22,6 +22,7 @@
 - The token expiration date can be specified in seconds or as a Unix timestamp (in UTC0)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`
+- Customizable way to refresh the token. You can choose the HTTP method and sending type (via the `Authorization` header, in the JSON body, or as a query parameter)
 - The Production with a configured sample is included in the package (see details in the `Auth` section of Business Operation)
 ## Installation with ZPM
 ```
