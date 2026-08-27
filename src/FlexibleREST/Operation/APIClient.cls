@@ -1,3 +1,8 @@
+/// To connect a new authentication provider:
+/// 1. Create a provider class that extends FlexibleREST.Auth.AbstractProvider
+/// 2. Create a settings class that extends FlexibleREST.Auth.ProviderSettings
+/// 3. Add the settings class to the Extends section of the APIClient
+/// 4. Set a provider class as TokenProviderClass in the Production
 Class FlexibleREST.Operation.APIClient Extends (EnsLib.REST.Operation, FlexibleREST.Auth.CustomSettings, FlexibleREST.Auth.Util)
 {
 

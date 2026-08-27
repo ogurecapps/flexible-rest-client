@@ -1,4 +1,4 @@
-/// Custom OAuth provider
+/// Custom OAuth-like provider
 Class FlexibleREST.Auth.CustomProvider Extends (FlexibleREST.Auth.AbstractProvider, FlexibleREST.Auth.Util)
 {
 

@@ -1,4 +1,4 @@
-/// Base class for token-provider settings
+/// Base class for authentication provider settings
 Class FlexibleREST.Auth.ProviderSettings Extends Ens.Settings [ Abstract ]
 {
 

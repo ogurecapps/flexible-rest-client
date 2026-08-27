@@ -1,3 +1,4 @@
+/// Setting of CustomProvider (see the PROVIDERCLASS parameter)
 Class FlexibleREST.Auth.CustomSettings Extends FlexibleREST.Auth.ProviderSettings
 {
 

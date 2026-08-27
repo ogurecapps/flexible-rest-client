@@ -5,7 +5,6 @@ Property HTTPCode As %Integer;
 
 Property StatusText As %String;
 
-/// For modification outside the operation
 Property Cookies As %String(MAXLEN = "");
 
 Storage Default

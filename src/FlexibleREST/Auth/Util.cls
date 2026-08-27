@@ -1,3 +1,4 @@
+/// Common utils
 Class FlexibleREST.Auth.Util Extends %RegisteredObject
 {
 

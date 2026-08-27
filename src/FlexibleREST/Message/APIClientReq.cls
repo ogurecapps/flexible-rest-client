@@ -8,7 +8,7 @@ Property Method As %String(VALUELIST = ",GET,POST,PUT,DELETE,PATCH") [ Required 
 
 Property Body As %Stream.GlobalCharacter;
 
-Property ContentType As %String [ InitialExpression = "application/json" ];
+Property ContentType As %String [ InitialExpression = "application/json; charset=utf-8" ];
 
 /// UTF8, JS, etc. See the $ZCONVERT documentation for details
 Property ConvertFrom As %String;

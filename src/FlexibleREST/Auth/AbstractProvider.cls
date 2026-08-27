@@ -1,4 +1,4 @@
-/// Token provider interface; concrete implementations (JWT, OAuth, etc.) must implement this interface
+/// Token provider interface. Concrete implementations (JWT, OAuth, etc.) must implement this interface
 Class FlexibleREST.Auth.AbstractProvider Extends %RegisteredObject [ Abstract ]
 {
 
