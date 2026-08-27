@@ -15,9 +15,9 @@ ClassMethod GetCanonicalURL(pSSLConfig As %String, pServer As %String, pPort As 
 $SELECT(pSSLConfig="":"http", 1:"https")_"://"_pServer_$SELECT(pPort="":"", 1:":"_pPort)_pURL
 }
 
-ClassMethod NowUnix() As %Numeric [ CodeMode = expression ]
+ClassMethod NowUnix() As %Integer [ CodeMode = expression ]
 {
-(($PIECE($ZTIMESTAMP, ",") - ..#SHIFTINDAYS) * 86400) + $PIECE($ZTIMESTAMP, ",", 2)
+(($PIECE($ZTIMESTAMP, ",") - ..#SHIFTINDAYS) * 86400) + $PIECE($PIECE($ZTIMESTAMP, ",", 2), ".", 1)
 }
 
 ClassMethod ISO8601ToUnix(pTimestamp As %String) As %Numeric

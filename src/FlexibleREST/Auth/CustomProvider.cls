@@ -36,6 +36,10 @@ Property ExpiresAsDate As %Boolean;
  
 Property DefaultTTL As %Integer;
 
+Property RefreshAuthStyle As %String;
+
+Property RefreshMethod As %String;
+
 /// Process-local cache
 Property %Token As %String(MAXLEN = "") [ Internal ];
  
@@ -139,18 +143,18 @@ Method TokensExtract(json As %DynamicObject) As %List
 	Set token = ..GetByPath(json, ..TokenField)
 	Return:token="" $$$ERROR($$$GeneralError, $$$FormatText("Field '%1' not found in JSON: %2", ..TokenField, json.%ToJSON()))
 	
-	Set expiresIn = ..GetByPath(json, ..ExpiresField)
+	Set expiresIn = $SELECT(..ExpiresField="":"", 1:..GetByPath(json, ..ExpiresField))
 	If expiresIn = "" {
 		Set tokenExpiresAt = ..NowUnix() + ..DefaultTTL
 	} Else {
 		Set tokenExpiresAt = $SELECT(..ExpiresAsDate: ..ISO8601ToUnix(expiresIn), 1: ..NowUnix() + expiresIn)
 	}
 	
-	Set refreshToken = ..GetByPath(json, ..RefreshTokenField)
+	Set refreshToken = $SELECT(..RefreshTokenField="":"", 1:..GetByPath(json, ..RefreshTokenField))
 	Set refreshTokenExpiresAt = ""
 	
 	If (refreshToken '= "") {
-		Set refreshTokenExpiresIn = ..GetByPath(json, ..RefreshTokenExpiresField)
+		Set refreshTokenExpiresIn = $SELECT(..RefreshTokenExpiresField="":"", 1:..GetByPath(json, ..RefreshTokenExpiresField))
 		If (refreshTokenExpiresIn = "") {
 			Set refreshTokenExpiresAt = ..NowUnix() + ..DefaultTTL
 		} Else {
@@ -163,10 +167,18 @@ Method TokensExtract(json As %DynamicObject) As %List
 
 Method FetchByRefreshToken(ByRef httpReq As %Net.HttpRequest) As %Status
 {
-	Do httpReq.SetHeader("Authorization", "Bearer "_..%RefreshToken)
+	If ..RefreshAuthStyle = "header" {
+		Do httpReq.SetHeader("Authorization", "Bearer "_..%RefreshToken)
+	} ElseIf ..RefreshAuthStyle = "parameters" {
+		Do httpReq.SetParam(..RefreshTokenField, ..%RefreshToken)
+	} Else {
+		Set json = {}.%Set(..RefreshTokenField, ..%RefreshToken)
+		Set tSC = ..BodySet(.httpReq, json)
+		Return:$$$ISERR(tSC) tSC
+	}
 
-	Do ..Trace("GET "_..GetCanonicalURL(..SSLConfig, ..HTTPServer, ..HTTPPort, ..RefreshURL), "FetchByRefreshToken")
-	Return httpReq.Get(..RefreshURL)
+	Do ..Trace(..RefreshMethod_" "_..GetCanonicalURL(..SSLConfig, ..HTTPServer, ..HTTPPort, ..RefreshURL), "FetchByRefreshToken")
+	Return $SELECT(..RefreshMethod="POST":httpReq.Post(..RefreshURL), 1:httpReq.Get(..RefreshURL))
 }
 
 Method FetchByToken(ByRef httpReq As %Net.HttpRequest) As %Status
@@ -176,13 +188,8 @@ Method FetchByToken(ByRef httpReq As %Net.HttpRequest) As %Status
 		Set httpReq.Password = ..Password
 	} ElseIf ..AuthStyle = "body" {
 		If ..RequestFormat = "json" {
-			Set body = ..BuildJSON()
-
-			Do body.%ToJSON(.stream)
-			Do httpReq.SetHeader("Content-Length", stream.Size)
-			Do httpReq.SetHeader("Host", httpReq.Server)
-			Do httpReq.SetHeader("Content-Type", "application/json")
-			Do httpReq.EntityBody.CopyFrom(stream)
+			Set tSC = ..BodySet(.httpReq, ..BuildJSON())
+			Return:$$$ISERR(tSC) tSC
 		} Else {	// form
 			Do ..BuildFormData(.httpReq)
 		}	
@@ -204,6 +211,17 @@ Method Invalidate() As %Status
 
 	Set ..%Token = "", ..%TokenExpiresAt = 0, ..%RefreshToken = "", ..%RefreshTokenExpiresAt = 0
 	Return $$$OK
+}
+
+Method BodySet(ByRef httpReq As %Net.HttpRequest, body As %DynamicObject) As %Status
+{
+	Set stream = ##class(%Stream.GlobalCharacter).%New()
+	Do body.%ToJSON(stream)
+	Do httpReq.SetHeader("Content-Length", stream.Size)
+	Do httpReq.SetHeader("Host", httpReq.Server)
+	Do httpReq.SetHeader("Content-Type", "application/json")
+	
+	Return httpReq.EntityBody.CopyFrom(stream)
 }
 
 Method BuildJSON() As %DynamicObject

@@ -22,6 +22,7 @@
 - The token expiration date can be specified in seconds or as a Unix timestamp (in UTC0)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`
+- The Production with a configured sample is included in the package (see details in the `Auth` section of Business Operation)
 ## Installation with ZPM
 ```
 zpm "install flexible-rest-client"
@@ -32,3 +33,5 @@ Run the command in the IRIS terminal with IPM installed. Add the `FlexibleREST.O
 git clone https://github.com/ogurecapps/flexible-rest-client.git
 ```
 Clone the repo into a local directory and copy the `FlexibleREST` package into your project
+## Launch of test Production
+After installing the package, you can run `FlexibleREST.Production.Test` in the IRIS Management Portal. Production already has a data stream set up to dummyjson.com. You only need to create a credential named `dummy-json`. You can use `{"username": "emilys", "password": "emilyspass"}` or take any from here: [https://dummyjson.com/users](https://dummyjson.com/users).
