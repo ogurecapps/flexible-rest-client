@@ -20,7 +20,7 @@ ClassMethod NowUnix() As %Integer [ CodeMode = expression ]
 (($PIECE($ZTIMESTAMP, ",") - ..#SHIFTINDAYS) * 86400) + $PIECE($PIECE($ZTIMESTAMP, ",", 2), ".", 1)
 }
 
-ClassMethod ISO8601ToUnix(pTimestamp As %String) As %Numeric
+ClassMethod ISO8601ToUnix(pTimestamp As %String) As %Integer
 {
 	Set dateStr = $PIECE(pTimestamp, "T", 1)
 	Set timeStr = $PIECE($PIECE(pTimestamp, "T", 2), ".", 1)
