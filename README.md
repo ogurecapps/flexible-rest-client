@@ -1,6 +1,7 @@
 # Flexible REST API Client for IRIS Interoperability (Ensemble)
 ## Features
 - Based on `EnsLib.REST.Operation`
+- Extensible architecture
 - Support request/response converting from/to UTF8, JS, etc. (useful when using an IRIS instance with a national locale)
 - Support HTTP headers
 - Support cookie modification
