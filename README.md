@@ -2,28 +2,28 @@
 ## Features
 - Based on `EnsLib.REST.Operation`
 - Extensible architecture
-- Support request/response converting from/to UTF8, JS, etc. (useful when using an IRIS instance with a national locale)
-- Support HTTP headers
+- Support request/response conversion from/to UTF8, JS, etc. (useful when using an IRIS instance with a national locale)
+- Support sending HTTP headers in Ensemble messages
 - Support cookie modification
 - Sending request as text body (JSON, XML, etc.) or as Form Data
 - Getting a character or binary response body (files)
 - Basic, Header, or Cookie authentication in simple cases
 - An easy way to connect custom authentication providers for complex use cases (retrieving and renewing tokens, managing expiration dates, and so on). See the `TokenProviderClass` setting and `FlexibleREST.Auth.AbstractProvider` class
 - Sharing a token between many business operations (see `TokenKey` setting)
-- Correct work with tokens in a multi-threaded mode of a single business operation (`Pool Size > 1`)
-- Two-level token cache: in process memory and on hard disk
+- Correctly work with tokens in a multi-threaded mode of a single business operation (`Pool Size > 1`)
+- Two-level token cache: in-process memory and on disk
 - Masking sensitive data in logs
 - Included a flexible OAuth-like token provider (implementation of the `AbstractProvider` interface). You can use it as a sample for your own provider implementation
 - Support for `refresh_token`
 - `TokenSkew` - early refreshing
 - Customizable auth style on token receiving: `body`, `basic`, `parameters` (see `TokenAuthStyle` setting)
 - Customizable token request body format: `form` (x-www-form-urlencoded) or `json` (if you use `TokenAuthStyle = body`)
-- Read and write token-related data from/to any fields. You only need to specify the field names, nesting is allowed! For example: `data.access_token` or `accessToken`
+- Read and write token-related data from/to any fields. You only need to specify the field names, nesting is allowed! For example, tokens can be found in: `data.access_token` or `accessToken` fields
 - The token expiration date can be specified in seconds or as a Unix timestamp (in UTC0)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`
 - Customizable way to refresh the token. You can choose the HTTP method and sending type (via the `Authorization` header, in the JSON body, or as a query parameter)
-- The Production with a configured sample is included in the package (see details in the `Auth` section of Business Operation)
+- The Interoperability Production with a configured sample is included in the package (see details in the `Auth` settings section of the Business Operation)
 ## Installation with ZPM
 ```
 zpm "install flexible-rest-client"
