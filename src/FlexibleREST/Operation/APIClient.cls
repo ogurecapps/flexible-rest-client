@@ -176,8 +176,6 @@ Method BuildResponse(pRequest As FlexibleREST.Message.APIClientReq, pHttpRequest
 	Set pResponse.HTTPCode = resp.StatusCode
 	Set pResponse.StatusText = resp.ReasonPhrase
 
-	$$$TRACE("Response received: "_pResponse.HTTPCode_" "_pResponse.StatusText)
-
 	Set size = pHttpRequest.GetFullCookieList(.cookies)
 	For i=1:1:size {
 		Set pResponse.Cookies = pResponse.Cookies_$SELECT(pResponse.Cookies="":"",1:";")_$LISTTOSTRING(cookies(i))

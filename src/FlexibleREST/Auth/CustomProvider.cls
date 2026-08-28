@@ -66,6 +66,7 @@ Method GetToken(Output token As %String) As %Status
 	// Disk cache
 	Set row = $GET(@gref)
 	If (row '= "") {
+		Do ..Trace("Token data has been restored from disk cache", "GetToken")
 		Do ..UpdateProcessCache(row)
 		
 		If (..%Token '= "") && (..%TokenExpiresAt > (..NowUnix() + ..Skew)) {
@@ -111,6 +112,7 @@ Method UpdateProcessCache(list As %List)
 Method Fetch(Output list As %List) As %Status
 {
 	Set useRefresh = (..%RefreshToken '= "") && (..%RefreshTokenExpiresAt >= (..NowUnix() + ..Skew))
+	Do ..Trace($SELECT(useRefresh:"Using refresh token", 1:"Using full token"), "Fetch")
 
 	Set httpReq = ..BuildHttpRequest()
 	Set tSC = $SELECT(useRefresh: ..FetchByRefreshToken(.httpReq), 1: ..FetchByToken(.httpReq))
@@ -119,6 +121,7 @@ Method Fetch(Output list As %List) As %Status
 	If useRefresh && $iso(httpReq.HttpResponse) && (httpReq.HttpResponse.StatusCode '= 200) {
 		Do ..Warn($$$FormatText("Refresh token rejected (HTTP %1). Falling back to full token fetch", httpReq.HttpResponse.StatusCode), "Fetch")
 		Do ..Invalidate()
+		Set useRefresh = 0
 
 		Set httpReq = ..BuildHttpRequest()
 		Set tSC = ..FetchByToken(.httpReq)
@@ -129,13 +132,19 @@ Method Fetch(Output list As %List) As %Status
 	Return:'$iso(httpReq.HttpResponse.Data) $$$ERROR($$$GeneralError, "Http response data is null on token fetching")
 	Return:httpReq.HttpResponse.StatusCode'=200 $$$ERROR($$$GeneralError, $$$FormatText("Invalid HTTP code on token fetching: %1", httpReq.HttpResponse.StatusCode))
 
-	Do ..Trace("Response: "_httpReq.HttpResponse.Data.Read(httpReq.HttpResponse.Data.Size), "Fetch")
-	Do httpReq.HttpResponse.Data.Rewind()
+	Do ..TraceTokenResponse({}.%FromJSON(httpReq.HttpResponse.Data), useRefresh)
 	
-	Set json = $SELECT($iso(httpReq.HttpResponse.Data):{}.%FromJSON(httpReq.HttpResponse.Data),1:{})
-	Set list = ..TokensExtract(json)
-	
+	Set list = ..TokensExtract({}.%FromJSON(httpReq.HttpResponse.Data))
 	Return $$$OK
+}
+
+Method TraceTokenResponse(json As %DynamicObject, isRefresh As %Boolean)
+{
+	Set token = json.%Get(..TokenField)
+	Set refreshToken = json.%Get(..RefreshTokenField)
+	Do:token'="" json.%Set(..TokenField, ..Mask(token))
+	Do:refreshToken'="" json.%Set(..RefreshTokenField, ..Mask(refreshToken))
+	Do ..Trace("Response: "_json.%ToJSON(), $SELECT(isRefresh:"FetchByRefreshToken", 1:"FetchByToken"))
 }
 
 Method TokensExtract(json As %DynamicObject) As %List
