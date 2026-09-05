@@ -3,7 +3,7 @@
   <Document name="flexible-rest-client.ZPM">
     <Module>
       <Name>flexible-rest-client</Name>
-      <Version>1.0.0</Version>
+      <Version>1.0.1</Version>
       <Description>Flexible REST API Client for IRIS Interoperability (Ensemble)</Description>
       <Keywords>ensemble,interoperability,rest,http,oauth,api,client</Keywords>
       <Packaging>module</Packaging>

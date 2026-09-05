@@ -1,4 +1,8 @@
 # Flexible REST API Client for IRIS Interoperability (Ensemble)
+## What's new
+- Added customizable unauthorized error checker (see `IsAuthError()` method)
+- Added `RawJWT` mode when the server returns only a JWT token as plain text. In this case, the API client extracts the expiration date from the token payload. I consciously did not add signature verification, since it requires additional elements (encryption algorithm, public key) and is not needed to extract the date
+- Bug fixes
 ## Features
 - Based on `EnsLib.REST.Operation`
 - Extensible architecture
@@ -22,7 +26,9 @@
 - The token expiration date can be specified in seconds or as an ISO 8601 datetime (please ensure the UTC0 time zone is used)
 - The default time-to-live of the token is supported (`TokenDefaultTTL`)
 - Customizable `grant_type` and token `scope`
+- Option `RawJWT` - when the server returns only a JWT token (as plain text), and we have to extract the expiration date ourselves
 - Customizable way to refresh the token. You can choose the HTTP method and sending type (via the `Authorization` header, in the JSON body, or as a query parameter)
+- Customizable unauthorized error checker. You can set one of the HTTP status codes (e.g., 401, 403) as a signal that the server rejected the token. Or override the `IsAuthError()` method to check the response body content, for example
 - The Interoperability Production with a configured sample is included in the package (see details in the `Auth` settings section of the Business Operation)
 ## Installation with ZPM
 ```

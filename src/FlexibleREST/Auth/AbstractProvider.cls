@@ -22,8 +22,19 @@ Property WriteTimeout As %Numeric(MINVAL = -1) [ InitialExpression = -1 ];
 
 Property LockTimeout As %Integer;
 
+/// Comma-separated list of HTTP status codes that indicate the current token was rejected by the server (default is 401 only)
+Property AuthErrorStatusCodes As %String(MAXLEN = 100) [ InitialExpression = "401" ];
+
 Method GetToken(Output token As %String) As %Status [ Abstract ]
 {
+}
+
+/// Decides whether the response means "the token is no longer valid" and should trigger invalidation + a single retry.
+/// Override in a concrete provider for APIs that signal auth errors differently (e.g. HTTP 200 with an error code in the body).
+Method IsAuthError(pHttpRequest As %Net.HttpRequest) As %Boolean
+{
+	Return:'$iso(pHttpRequest.HttpResponse) 0
+	Return $LISTFIND($LISTFROMSTRING(..AuthErrorStatusCodes), pHttpRequest.HttpResponse.StatusCode) > 0
 }
 
 /// Clear cache

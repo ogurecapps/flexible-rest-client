@@ -39,6 +39,8 @@ Property DefaultTTL As %Integer;
 Property RefreshAuthStyle As %String;
 
 Property RefreshMethod As %String;
+ 
+Property RawJWT As %Boolean;
 
 /// Process-local cache
 Property %Token As %String(MAXLEN = "") [ Internal ];
@@ -132,9 +134,35 @@ Method Fetch(Output list As %List) As %Status
 	Return:'$iso(httpReq.HttpResponse.Data) $$$ERROR($$$GeneralError, "Http response data is null on token fetching")
 	Return:httpReq.HttpResponse.StatusCode'=200 $$$ERROR($$$GeneralError, $$$FormatText("Invalid HTTP code on token fetching: %1", httpReq.HttpResponse.StatusCode))
 
-	Do ..TraceTokenResponse({}.%FromJSON(httpReq.HttpResponse.Data), useRefresh)
-	
-	Set list = ..TokensExtract({}.%FromJSON(httpReq.HttpResponse.Data))
+	If ..RawJWT {
+		Set tSC = ..DecodeJWT(httpReq.HttpResponse.Data, .list)
+	} Else {
+		Do ..TraceTokenResponse({}.%FromJSON(httpReq.HttpResponse.Data), useRefresh)
+		Set tSC = ..TokensExtract({}.%FromJSON(httpReq.HttpResponse.Data), .list)
+	}
+	Return:$$$ISERR(tSC) tSC
+
+	Return $$$OK
+}
+
+Method DecodeJWT(body As %Stream.Object, Output list As %List) As %Status
+{
+	Set token = $ZSTRIP(body.Read(body.Size), "<>W")
+	Return:token="" $$$ERROR($$$GeneralError, "Empty JWT in response body")
+
+	Set payload = $PIECE(token, ".", 2)
+	Return:payload="" $$$ERROR($$$GeneralError, $$$FormatText("Malformed JWT: expected 3 dot-separated segments (%1)", token))
+
+	Try {
+		Set claims = {}.%FromJSON(..Base64UrlDecode(payload))
+	} Catch ex {
+		Return $$$ERROR($$$GeneralError, $$$FormatText("Failed to decode JWT payload: %1", ex.DisplayString()))
+	}
+
+	Set tokenExpiresAt = $SELECT(claims.exp="":..NowUnix() + ..DefaultTTL, 1:claims.exp)
+	Do ..Trace($$$FormatText("Decoded JWT: token = %1, exp = %2", ..Mask(token), tokenExpiresAt), "DecodeJWT")
+
+	Set list = $LISTBUILD(token, +tokenExpiresAt, "", "")
 	Return $$$OK
 }
 
@@ -147,7 +175,7 @@ Method TraceTokenResponse(json As %DynamicObject, isRefresh As %Boolean)
 	Do ..Trace("Response: "_json.%ToJSON(), $SELECT(isRefresh:"FetchByRefreshToken", 1:"FetchByToken"))
 }
 
-Method TokensExtract(json As %DynamicObject) As %List
+Method TokensExtract(json As %DynamicObject, Output list As %List) As %Status
 {
 	Set token = ..GetByPath(json, ..TokenField)
 	Return:token="" $$$ERROR($$$GeneralError, $$$FormatText("Field '%1' not found in JSON: %2", ..TokenField, json.%ToJSON()))
@@ -171,7 +199,8 @@ Method TokensExtract(json As %DynamicObject) As %List
 		}
 	}
 
-	Return $LISTBUILD(token, +tokenExpiresAt, refreshToken, +refreshTokenExpiresAt)
+	Set list = $LISTBUILD(token, +tokenExpiresAt, refreshToken, +refreshTokenExpiresAt)
+	Return $$$OK
 }
 
 Method FetchByRefreshToken(ByRef httpReq As %Net.HttpRequest) As %Status

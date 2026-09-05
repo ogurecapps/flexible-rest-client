@@ -36,4 +36,16 @@ ClassMethod GetByPath(json As %DynamicObject, path As %String) As %String [ Code
 $XECUTE($$$FormatText("(json) Quit json.%1", path), json)
 }
 
+/// Decode a base64url string, as used in JWT segments, back to base64 and decode it
+ClassMethod Base64UrlDecode(data As %String) As %String
+{
+	Set str = $TRANSLATE(data, "-_", "+/")
+	Set padLen = $SELECT($LENGTH(str)#4: 4-($LENGTH(str)#4), 1:0)
+	For i=1:1:padLen {
+		Set str = str_"="
+	}
+
+	Return $SYSTEM.Encryption.Base64Decode(str)
+}
+
 }

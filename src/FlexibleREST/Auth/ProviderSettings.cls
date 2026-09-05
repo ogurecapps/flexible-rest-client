@@ -2,7 +2,7 @@
 Class FlexibleREST.Auth.ProviderSettings Extends Ens.Settings [ Abstract ]
 {
 
-Parameter SETTINGS = "TokenProviderClass:TokenProvider,TokenKey:TokenProvider,TokenCredentials:TokenProvider:credentialsSelector,TokenLockTimeout:TokenProvider";
+Parameter SETTINGS = "TokenProviderClass:TokenProvider,TokenKey:TokenProvider,TokenCredentials:TokenProvider:credentialsSelector,TokenLockTimeout:TokenProvider,TokenAuthErrorCodes:TokenProvider";
 
 /// Override in the implementation
 Parameter KEYMAP = "";
@@ -22,7 +22,10 @@ Property TokenCredentials As %String;
 
 /// Lock timeout for the token cache, seconds (^FlexibleREST.Auth.TokenCache)
 Property TokenLockTimeout As %Integer [ InitialExpression = 15 ];
- 
+
+/// Comma-separated list of HTTP status codes that mean the current token was rejected by the server and should be refreshed (default is 401 only)
+Property TokenAuthErrorCodes As %String(MAXLEN = 100) [ InitialExpression = "401" ];
+
 Property %TokenProvider As FlexibleREST.Auth.AbstractProvider [ Internal ];
 
 Method InitTokenProvider(pConfigName As %String, adapter As EnsLib.HTTP.OutboundAdapter) As %Status
@@ -61,9 +64,8 @@ Method ApplyAuth(ByRef pHttpRequest As %Net.HttpRequest) As %Status
 Method RetryUnauthorized(ByRef pHttpRequest As %Net.HttpRequest, pRequest As FlexibleREST.Message.APIClientReq, pURL As %String) As %Status
 {
 	Return:(..TokenProviderClass="")||'$ISOBJECT(..%TokenProvider) $$$OK
-	Return:'$iso(pHttpRequest.HttpResponse) $$$OK
-	Return:pHttpRequest.HttpResponse.StatusCode'=401 $$$OK
-	
+	Return:'..%TokenProvider.IsAuthError(pHttpRequest) $$$OK
+
 	Do ..%TokenProvider.Invalidate()
 	Do:$iso(pHttpRequest.EntityBody) pHttpRequest.EntityBody.Rewind()
 
@@ -90,6 +92,7 @@ Method BuildSettings(Output pSettings, pConfigName As %String, adapter As EnsLib
 	Set pSettings("SSLConfig") = adapter.SSLConfig
 	Set pSettings("WriteTimeout") = adapter.WriteTimeout
 	Set pSettings("LockTimeout") = ..TokenLockTimeout
+	Set pSettings("AuthErrorStatusCodes") = ..TokenAuthErrorCodes
  
 	If (..TokenCredentials '= "") && ($ZCONVERT(..TokenCredentials, "U") '= "NONE") {
 		Set cred = ##class(Ens.Config.Credentials).%OpenId(..TokenCredentials)
