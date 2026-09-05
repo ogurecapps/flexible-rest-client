@@ -41,7 +41,8 @@ Method InitTokenProvider(pConfigName As %String, adapter As EnsLib.HTTP.Outbound
 	Set provider = $CLASSMETHOD(..TokenProviderClass, "%New")
 	Return:'$ISOBJECT(provider) $$$ERROR($$$GeneralError, $$$FormatText("Failed to create an instance of token provider %1", ..TokenProviderClass))
 
-	Do ..BuildSettings(.settings, pConfigName, adapter)
+	Set tSC = ..BuildSettings(.settings, pConfigName, adapter)
+	Return:$$$ISERR(tSC) tSC
 
 	Set tSC = provider.Configure(.settings)
 	Return:$$$ISERR(tSC) tSC
@@ -110,9 +111,9 @@ Method BuildSettings(Output pSettings, pConfigName As %String, adapter As EnsLib
  
 	Try {
 		Set prop = ""
-		For i=1:1:$LENGTH(def.PrimarySuper, "~") {
-			Set super = $PIECE(def.PrimarySuper, "~", i)
-			
+		For i=1:1:$LENGTH(def.Super, ",") {
+			Set super = $PIECE(def.Super, ",", i)
+
 			Continue:super=""
 			Continue:..GetParam(super,"PROVIDERCLASS")'=..TokenProviderClass
  
