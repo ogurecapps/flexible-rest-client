@@ -39,6 +39,8 @@ Property DefaultTTL As %Integer;
 Property RefreshAuthStyle As %String;
 
 Property RefreshMethod As %String;
+
+Property LoginMethod As %String;
  
 Property RawJWT As %Boolean;
 
@@ -238,8 +240,17 @@ Method FetchByToken(ByRef httpReq As %Net.HttpRequest) As %Status
 		Do:..Scope'="" httpReq.SetParam("scope", ..Scope)
 	}
 
-	Do ..Trace("POST "_..GetCanonicalURL(..SSLConfig, ..HTTPServer, ..HTTPPort, ..TokenURL), "FetchByToken")
-	Return httpReq.Post(..TokenURL)
+	Do ..Trace(..LoginMethod_" "_..GetCanonicalURL(..SSLConfig, ..HTTPServer, ..HTTPPort, ..TokenURL), "FetchByToken")
+	
+	If ..LoginMethod = "POST" {
+		Set tSC = httpReq.Post(..TokenURL)
+	} ElseIf ..LoginMethod = "GET" {
+		Set tSC = httpReq.Get(..TokenURL)
+	} Else {
+		Set tSC = $$$ERROR($$$GeneralError, "Unsupported login method: "_..LoginMethod)
+	}
+
+	Return tSC
 }
 
 Method Invalidate() As %Status
