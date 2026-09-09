@@ -2,6 +2,7 @@
 ## What's new
 - Added a customizable unauthorized error checker (see the `IsAuthError()` method)
 - Added `RawJWT` mode when the server returns only a JWT token as plain text. In this case, the API client extracts the expiration date from the token payload. I consciously did not add signature verification, since it requires additional elements (encryption algorithm, public key) and is not needed to extract the date
+- Added selectable `LoginMethod` for token requests
 - Bug fixes
 ## Features
 - Based on `EnsLib.REST.Operation`
