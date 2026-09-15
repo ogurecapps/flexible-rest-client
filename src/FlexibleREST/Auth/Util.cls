@@ -5,6 +5,12 @@ Class FlexibleREST.Auth.Util Extends %RegisteredObject
 /// The difference between day 0 in Unix and Cache
 Parameter SHIFTINDAYS = 47117;
 
+/// All 2xx HTTP codes are allowed
+ClassMethod IsOK(code As %Integer) As %Boolean [ CodeMode = expression ]
+{
+(code >= 200) && (code < 300)
+}
+
 ClassMethod Mask(data As %String) As %String [ CodeMode = expression ]
 {
 $SELECT(data="":"", 1:$EXTRACT(data, 1, 10)_"..."_"("_$LENGTH(data)_" chars)")

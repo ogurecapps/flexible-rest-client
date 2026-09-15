@@ -122,7 +122,7 @@ Method Fetch(Output list As %List) As %Status
 	Set tSC = $SELECT(useRefresh: ..FetchByRefreshToken(.httpReq), 1: ..FetchByToken(.httpReq))
 	Return:$$$ISERR(tSC) tSC
 
-	If useRefresh && $iso(httpReq.HttpResponse) && (httpReq.HttpResponse.StatusCode '= 200) {
+	If useRefresh && $iso(httpReq.HttpResponse) && '..IsOK(httpReq.HttpResponse.StatusCode) {
 		Do ..Warn($$$FormatText("Refresh token rejected (HTTP %1). Falling back to full token fetch", httpReq.HttpResponse.StatusCode), "Fetch")
 		Do ..Invalidate()
 		Set useRefresh = 0
@@ -134,7 +134,7 @@ Method Fetch(Output list As %List) As %Status
 
 	Return:'$iso(httpReq.HttpResponse) $$$ERROR($$$GeneralError, "Http response is null on token fetching")
 	Return:'$iso(httpReq.HttpResponse.Data) $$$ERROR($$$GeneralError, "Http response data is null on token fetching")
-	Return:httpReq.HttpResponse.StatusCode'=200 $$$ERROR($$$GeneralError, $$$FormatText("Invalid HTTP code on token fetching: %1", httpReq.HttpResponse.StatusCode))
+	Return:'..IsOK(httpReq.HttpResponse.StatusCode) $$$ERROR($$$GeneralError, $$$FormatText("Invalid HTTP code on token fetching: %1", httpReq.HttpResponse.StatusCode))
 
 	If ..RawJWT {
 		Set tSC = ..DecodeJWT(httpReq.HttpResponse.Data, .list)
