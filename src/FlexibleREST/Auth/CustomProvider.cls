@@ -42,7 +42,9 @@ Property RefreshMethod As %String;
 
 Property LoginMethod As %String;
  
-Property RawJWT As %Boolean;
+Property TokenAsPlainText As %Boolean;
+
+Property TokenExpiresFromJWT As %Boolean;
 
 /// Process-local cache
 Property %Token As %String(MAXLEN = "") [ Internal ];
@@ -136,22 +138,20 @@ Method Fetch(Output list As %List) As %Status
 	Return:'$iso(httpReq.HttpResponse.Data) $$$ERROR($$$GeneralError, "Http response data is null on token fetching")
 	Return:'..IsOK(httpReq.HttpResponse.StatusCode) $$$ERROR($$$GeneralError, $$$FormatText("Invalid HTTP code on token fetching: %1", httpReq.HttpResponse.StatusCode))
 
-	If ..RawJWT {
-		Set tSC = ..DecodeJWT(httpReq.HttpResponse.Data, .list)
+	If ..TokenAsPlainText {
+		Set tSC = ..BodyTokensExtract(httpReq.HttpResponse.Data, .list)
 	} Else {
-		Do ..TraceTokenResponse({}.%FromJSON(httpReq.HttpResponse.Data), useRefresh)
-		Set tSC = ..TokensExtract({}.%FromJSON(httpReq.HttpResponse.Data), .list)
+		Set json = {}.%FromJSON(httpReq.HttpResponse.Data)
+		Do ..TraceTokenResponse(json, useRefresh)
+		Set tSC = ..JSONTokensExtract(json, .list)
 	}
 	Return:$$$ISERR(tSC) tSC
 
 	Return $$$OK
 }
 
-Method DecodeJWT(body As %Stream.Object, Output list As %List) As %Status
+Method JWTExpiresExtract(token As %String, Output expiresAt As %Integer) As %Status
 {
-	Set token = $ZSTRIP(body.Read(body.Size), "<>W")
-	Return:token="" $$$ERROR($$$GeneralError, "Empty JWT in response body")
-
 	Set payload = $PIECE(token, ".", 2)
 	Return:payload="" $$$ERROR($$$GeneralError, $$$FormatText("Malformed JWT: expected 3 dot-separated segments (%1)", token))
 
@@ -161,8 +161,23 @@ Method DecodeJWT(body As %Stream.Object, Output list As %List) As %Status
 		Return $$$ERROR($$$GeneralError, $$$FormatText("Failed to decode JWT payload: %1", ex.DisplayString()))
 	}
 
-	Set tokenExpiresAt = $SELECT(claims.exp="":..NowUnix() + ..DefaultTTL, 1:claims.exp)
-	Do ..Trace($$$FormatText("Decoded JWT: token = %1, exp = %2", ..Mask(token), tokenExpiresAt), "DecodeJWT")
+	Set expiresAt = $SELECT(claims.exp="":..NowUnix() + ..DefaultTTL, 1:claims.exp)
+	Return $$$OK
+}
+
+Method BodyTokensExtract(body As %Stream.Object, Output list As %List) As %Status
+{
+	Set token = $ZSTRIP(body.Read(body.Size), "<>W")
+	Return:token="" $$$ERROR($$$GeneralError, "Empty string in response body")
+
+	If ..TokenExpiresFromJWT {
+		Set tSC = ..JWTExpiresExtract(token, .tokenExpiresAt)
+		Return:$$$ISERR(tSC) tSC
+	} Else {
+		Set tokenExpiresAt = ..NowUnix() + ..DefaultTTL
+	}
+
+	Do ..Trace($$$FormatText("Read from the body: token = %1, exp = %2", ..Mask(token), tokenExpiresAt), "BodyTokensExtract")
 
 	Set list = $LISTBUILD(token, +tokenExpiresAt, "", "")
 	Return $$$OK
@@ -170,34 +185,41 @@ Method DecodeJWT(body As %Stream.Object, Output list As %List) As %Status
 
 Method TraceTokenResponse(json As %DynamicObject, isRefresh As %Boolean)
 {
-	Set token = json.%Get(..TokenField)
-	Set refreshToken = json.%Get(..RefreshTokenField)
-	Do:token'="" json.%Set(..TokenField, ..Mask(token))
-	Do:refreshToken'="" json.%Set(..RefreshTokenField, ..Mask(refreshToken))
-	Do ..Trace("Response: "_json.%ToJSON(), $SELECT(isRefresh:"FetchByRefreshToken", 1:"FetchByToken"))
+	Set body = json.%ToJSON()
+	Set token = ..GetByPath(json, ..TokenField)
+	Set refreshToken = $SELECT(..RefreshTokenField="":"", 1:..GetByPath(json, ..RefreshTokenField))
+	Set:token'="" body = $REPLACE(body, token, ..Mask(token))
+	Set:refreshToken'="" body = $REPLACE(body, refreshToken, ..Mask(refreshToken))
+
+	Do ..Trace("Response: "_body, $SELECT(isRefresh:"FetchByRefreshToken", 1:"FetchByToken"))
 }
 
-Method TokensExtract(json As %DynamicObject, Output list As %List) As %Status
+Method JSONTokensExtract(json As %DynamicObject, Output list As %List) As %Status
 {
 	Set token = ..GetByPath(json, ..TokenField)
 	Return:token="" $$$ERROR($$$GeneralError, $$$FormatText("Field '%1' not found in JSON: %2", ..TokenField, json.%ToJSON()))
 	
-	Set expiresIn = $SELECT(..ExpiresField="":"", 1:..GetByPath(json, ..ExpiresField))
-	If expiresIn = "" {
-		Set tokenExpiresAt = ..NowUnix() + ..DefaultTTL
+	If ..TokenExpiresFromJWT {
+		Set tSC = ..JWTExpiresExtract(token, .tokenExpiresAt)
+		Return:$$$ISERR(tSC) tSC
 	} Else {
-		Set tokenExpiresAt = $SELECT(..ExpiresAsDate: ..ISO8601ToUnix(expiresIn), 1: ..NowUnix() + expiresIn)
+		Set expires = $SELECT(..ExpiresField="":"", 1:..GetByPath(json, ..ExpiresField))
+		If expires = "" {
+			Set tokenExpiresAt = ..NowUnix() + ..DefaultTTL
+		} Else {
+			Set tokenExpiresAt = $SELECT(..ExpiresAsDate: ..ISO8601ToUnix(expires), 1: ..NowUnix() + expires)
+		}
 	}
 	
 	Set refreshToken = $SELECT(..RefreshTokenField="":"", 1:..GetByPath(json, ..RefreshTokenField))
 	Set refreshTokenExpiresAt = ""
 	
 	If (refreshToken '= "") {
-		Set refreshTokenExpiresIn = $SELECT(..RefreshTokenExpiresField="":"", 1:..GetByPath(json, ..RefreshTokenExpiresField))
-		If (refreshTokenExpiresIn = "") {
+		Set refreshExpires = $SELECT(..RefreshTokenExpiresField="":"", 1:..GetByPath(json, ..RefreshTokenExpiresField))
+		If (refreshExpires = "") {
 			Set refreshTokenExpiresAt = ..NowUnix() + ..DefaultTTL
 		} Else {
-			Set refreshTokenExpiresAt = $SELECT(..ExpiresAsDate: ..ISO8601ToUnix(refreshTokenExpiresIn), 1: ..NowUnix() + refreshTokenExpiresIn)
+			Set refreshTokenExpiresAt = $SELECT(..ExpiresAsDate: ..ISO8601ToUnix(refreshExpires), 1: ..NowUnix() + refreshExpires)
 		}
 	}
 

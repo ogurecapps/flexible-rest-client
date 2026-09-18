@@ -2,10 +2,10 @@
 Class FlexibleREST.Auth.CustomSettings Extends FlexibleREST.Auth.ProviderSettings
 {
 
-Parameter SETTINGS = "TokenURL:Auth,RefreshTokenURL:Auth,TokenSkew:Auth,TokenGrantType:Auth,TokenScope:Auth,TokenAuthStyle:Auth,TokenRequestFormat:Auth,TokenClientIdFieldName:Auth,TokenClientSecretFieldName:Auth,TokenFieldName:Auth,TokenExpiresFieldName:Auth,TokenExpiresAsDate:Auth,RefreshTokenFieldName:Auth,RefreshTokenExpiresFieldName:Auth,TokenDefaultTTL:Auth,RefreshAuthStyle:Auth,RefreshMethod:Auth,LoginMethod:Auth,RawJWT:Auth";
+Parameter SETTINGS = "TokenURL:Auth,RefreshTokenURL:Auth,TokenSkew:Auth,TokenGrantType:Auth,TokenScope:Auth,TokenAuthStyle:Auth,TokenRequestFormat:Auth,TokenClientIdFieldName:Auth,TokenClientSecretFieldName:Auth,TokenFieldName:Auth,TokenExpiresFieldName:Auth,TokenExpiresAsDate:Auth,RefreshTokenFieldName:Auth,RefreshTokenExpiresFieldName:Auth,TokenDefaultTTL:Auth,RefreshAuthStyle:Auth,RefreshMethod:Auth,LoginMethod:Auth,TokenAsPlainText:Auth,TokenExpiresFromJWT:Auth";
 
 /// Which token-provider fields the settings values should be written to
-Parameter KEYMAP = "TokenURL,RefreshTokenURL:RefreshURL,TokenSkew:Skew,TokenGrantType:GrantType,TokenScope:Scope,TokenAuthStyle:AuthStyle,TokenRequestFormat:RequestFormat,TokenClientIdFieldName:ClientIdFieldName,TokenClientSecretFieldName:ClientSecretFieldName,TokenFieldName:TokenField,TokenExpiresFieldName:ExpiresField,TokenExpiresAsDate:ExpiresAsDate,RefreshTokenFieldName:RefreshTokenField,RefreshTokenExpiresFieldName:RefreshTokenExpiresField,TokenDefaultTTL:DefaultTTL,RefreshAuthStyle,RefreshMethod,LoginMethod,RawJWT";
+Parameter KEYMAP = "TokenURL,RefreshTokenURL:RefreshURL,TokenSkew:Skew,TokenGrantType:GrantType,TokenScope:Scope,TokenAuthStyle:AuthStyle,TokenRequestFormat:RequestFormat,TokenClientIdFieldName:ClientIdFieldName,TokenClientSecretFieldName:ClientSecretFieldName,TokenFieldName:TokenField,TokenExpiresFieldName:ExpiresField,TokenExpiresAsDate:ExpiresAsDate,RefreshTokenFieldName:RefreshTokenField,RefreshTokenExpiresFieldName:RefreshTokenExpiresField,TokenDefaultTTL:DefaultTTL,RefreshAuthStyle,RefreshMethod,LoginMethod,TokenAsPlainText,TokenExpiresFromJWT";
 
 /// Which token provider these settings belong to
 Parameter PROVIDERCLASS = "FlexibleREST.Auth.CustomProvider";
@@ -61,8 +61,10 @@ Property RefreshMethod As %String(VALUELIST = ",GET,POST") [ InitialExpression =
 
 Property LoginMethod As %String(VALUELIST = ",GET,POST") [ InitialExpression = "POST" ];
 
-/// The server returns only a JWT token (as plain text). We have to extract the expiration date ourselves.
-/// TokenFieldName/TokenExpiresFieldName/TokenExpiresAsDate are ignored - expiry is read from the JWT's own "exp" claim instead
-Property RawJWT As %Boolean [ InitialExpression = 0 ];
+/// The server returns the token in plain text. TokenFieldName/TokenExpiresFieldName/TokenExpiresAsDate parameters will be ignored
+Property TokenAsPlainText As %Boolean [ InitialExpression = 0 ];
+
+/// Extracting the expiration date from the JWT
+Property TokenExpiresFromJWT As %Boolean [ InitialExpression = 0 ];
 
 }
