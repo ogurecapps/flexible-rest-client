@@ -161,6 +161,8 @@ Method JWTExpiresExtract(token As %String, Output expiresAt As %Integer) As %Sta
 		Return $$$ERROR($$$GeneralError, $$$FormatText("Failed to decode JWT payload: %1", ex.DisplayString()))
 	}
 
+	Do ..Trace($$$FormatText("JWT claims.exp = %1", claims.exp), "JWTExpiresExtract")
+
 	Set expiresAt = $SELECT(claims.exp="":..NowUnix() + ..DefaultTTL, 1:claims.exp)
 	Return $$$OK
 }
